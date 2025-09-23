@@ -54,3 +54,4 @@ int main(){
     descomprimir_rle();
     return 0;
 }
+
