@@ -45,7 +45,7 @@ void descomprimir_rle() {
             i++; // Avanzar al siguiente grupo
         }
         archivo2 << endl;
-    }
+    } 
     archivo.close();
     archivo2.close();
 }
