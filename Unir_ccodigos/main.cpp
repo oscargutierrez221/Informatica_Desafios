@@ -9,11 +9,10 @@
 using namespace std;
 
 // Descomprimir un archivo usando RLE con codigo ASCII para ver caracter por caracter y descomprimirlo
-// La idea es usar un ciclo for donde usaremos ASCII para ver caracter por caracter y descomprimirlo
 
 void descomprimir_rle() {
-    ifstream archivo("/home/david/Documentos/Unir_ccodigos/Texto comprimido.txt");
-    ofstream archivo2("/home/david/Documentos/Unir_ccodigos/Texto descomprimido.txt");
+    ifstream archivo("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto comprimido.txt");
+    ofstream archivo2("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto descomprimido.txt");
 
     if (!archivo.is_open()) {
         cout << "Error: No se pudo abrir el archivo de entrada." << endl;
@@ -24,21 +23,24 @@ void descomprimir_rle() {
         return;
     }
 
-    char linea[501];
-    while (archivo.getline(linea, 501)) {
+    char linea[10001];
+    while (archivo.getline(linea, 10001)) {
         int i = 0;
         while (linea[i] != '\0') {
             int count = 0;
-            // Leer todos los dígitos del número
-            while (linea[i] >= '0' && linea[i] <= '9') {
-                count = count * 10 + (linea[i] - '0');
-                i++;
+            if (linea[i] >= '0' && linea[i] <= '9') {
+                while (linea[i] >= '0' && linea[i] <= '9') {
+                    count = count * 10 + (linea[i] - '0');
+                    i++;
+                }
+            } else {
+                count = 1;
             }
-            char caracter = linea[i]; // El carácter a repetir
+            char caracter = linea[i];
             for (int j = 0; j < count; ++j) {
                 archivo2 << caracter;
             }
-            i++; // Avanzar al siguiente grupo
+            i++;
         }
         archivo2 << endl;
     }
@@ -47,17 +49,17 @@ void descomprimir_rle() {
 }
 
 void descomprimir_lz78() {
-    ifstream archivo("/home/david/Documentos/Unir_ccodigos/Texto comprimido.txt", ios::binary);
+    ifstream archivo("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto comprimido.txt", ios::binary);
     if (!archivo.is_open()) {
         cout << "Archivo de entrada no encontrado. Creando uno vacío..." << endl;
         // se crea el archivo de entrada si no exciste
-        ofstream crear("/home/david/Documentos/Unir_ccodigos/Texto comprimido.txt");
+        ofstream crear("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto comprimido.txt");
         crear.close();
         return; // No hay nada que descomprimir
     }
 
     // El archivo de salida se crea automáticamente si no existe
-    ofstream archivo2("/home/david/Documentos/Unir_ccodigos/Texto descomprimido.txt");
+    ofstream archivo2("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto descomprimido.txt");
 
     // Diccionario dinámico de punteros a cadenas (arreglos char)
     const int MAX_ENTRADAS = 1000;
@@ -115,10 +117,8 @@ void descomprimir_lz78() {
 }
 
 void desencriptar(const char* filename, int n, unsigned char K) {
-    char path[256];
-    snprintf(path, sizeof(path), "/home/david/Documentos/Unir_ccodigos/%s", filename);
-    ifstream archivo(path, ios::binary);
-    ofstream archivo2("/home/david/Documentos/Unir_ccodigos/Texto comprimido.txt", ios::binary);
+    ifstream archivo(filename, ios::binary);
+    ofstream archivo2("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto comprimido.txt", ios::binary);
 
     if (!archivo.is_open()) {
         cout << "Error: No se pudo abrir el archivo de entrada." << endl;
@@ -141,7 +141,7 @@ void desencriptar(const char* filename, int n, unsigned char K) {
 }
 
 int determinar_metodo() {
-    ifstream archivo("/home/david/Documentos/Unir_ccodigos/Texto comprimido.txt");
+    ifstream archivo("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto comprimido.txt");
     if (!archivo.is_open()) {
         cout << "Error: No se pudo abrir el archivo comprimido para determinación." << endl;
         return 0;
@@ -152,7 +152,7 @@ int determinar_metodo() {
     int count = 0;
     while (archivo.get(ch) && count < 100) {  // Revisar solo los primeros 100 bytes para eficiencia
         unsigned char uch = static_cast<unsigned char>(ch);
-        if (!isprint(uch) && uch != '\n' && uch != '\r' && uch != '\t') {
+        if (uch == 0 || (!isprint(uch) && uch != '\n' && uch != '\r' && uch != '\t')) {
             is_printable = false;
             break;
         }
@@ -185,11 +185,9 @@ void descomprimir_auto() {
 }
 
 int main() {
-    const char* filename = "Encriptado1.txt"; // Cambia este nombre para procesar otros archivos
-    // Ejemplo: Llama a desencriptar con valores conocidos (ajusta n y K según el desafío)
-    desencriptar(filename, 3, 0x5A); // Por ejemplo, n=3, K=0x5A - cámbialos por los correctos
+    const char* filename = "/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Encriptado1.txt"; // Es necesario cambiar esta ruta para procesar otros archivos
+    desencriptar(filename, 3, 0x5A); // Por ejemplo, n=3, K=0x5A
 
-    // Luego, descomprime automáticamente determinando el método
     descomprimir_auto();
 
     return 0;
