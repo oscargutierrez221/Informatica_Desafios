@@ -9,10 +9,11 @@
 using namespace std;
 
 // Descomprimir un archivo usando RLE con codigo ASCII para ver caracter por caracter y descomprimirlo
+// La idea es usar un ciclo for donde usaremos ASCII para ver caracter por caracter y descomprimirlo
 
 void descomprimir_rle() {
-    ifstream archivo("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto comprimido.txt");
-    ofstream archivo2("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto descomprimido.txt");
+    ifstream archivo("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto comprimido.txt", ios::binary);
+    ofstream archivo2("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto descomprimido.txt", ios::binary);
 
     if (!archivo.is_open()) {
         cout << "Error: No se pudo abrir el archivo de entrada." << endl;
@@ -23,27 +24,39 @@ void descomprimir_rle() {
         return;
     }
 
-    char linea[10001];
-    while (archivo.getline(linea, 10001)) {
-        int i = 0;
-        while (linea[i] != '\0') {
-            int count = 0;
-            if (linea[i] >= '0' && linea[i] <= '9') {
-                while (linea[i] >= '0' && linea[i] <= '9') {
-                    count = count * 10 + (linea[i] - '0');
-                    i++;
-                }
-            } else {
-                count = 1;
-            }
-            char caracter = linea[i];
-            for (int j = 0; j < count; ++j) {
-                archivo2 << caracter;
-            }
-            i++;
+    char ch;
+    while (archivo.get(ch)) {
+        if (isdigit(static_cast<unsigned char>(ch))) {
+            // Tratar dígitos como caracteres normales si aparecen solos
+            archivo2 << ch;
+            continue;
         }
-        archivo2 << endl;
+
+        // ch es el carácter a repetir
+        int count = 0;
+        bool has_count = false;
+
+        while (true) {
+            int peeked = archivo.peek();
+            if (peeked == EOF || !isdigit(static_cast<unsigned char>(peeked))) {
+                break;
+            }
+            has_count = true;
+            char digit_ch;
+            archivo.get(digit_ch);
+            count = count * 10 + (digit_ch - '0');
+        }
+
+        if (!has_count) {
+            count = 1;
+        }
+
+        // Escribir el carácter count veces
+        for (int i = 0; i < count; ++i) {
+            archivo2 << ch;
+        }
     }
+
     archivo.close();
     archivo2.close();
 }
@@ -52,18 +65,18 @@ void descomprimir_lz78() {
     ifstream archivo("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto comprimido.txt", ios::binary);
     if (!archivo.is_open()) {
         cout << "Archivo de entrada no encontrado. Creando uno vacío..." << endl;
-        // se crea el archivo de entrada si no exciste
+        // se crea el archivo de entrada si no existe
         ofstream crear("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto comprimido.txt");
         crear.close();
         return; // No hay nada que descomprimir
     }
 
     // El archivo de salida se crea automáticamente si no existe
-    ofstream archivo2("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto descomprimido.txt");
+    ofstream archivo2("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto descomprimido.txt", ios::binary);
 
     // Diccionario dinámico de punteros a cadenas (arreglos char)
-    const int MAX_ENTRADAS = 1000;
-    // un arreglo estatico apuntado hacia char
+    const int MAX_ENTRADAS = 10000; // Aumentado para archivos más grandes
+    // un arreglo estático apuntado hacia char
     char* diccionario[MAX_ENTRADAS];
     int tamanos[MAX_ENTRADAS];
     int total = 0; // cantidad de entradas en el diccionario
@@ -75,6 +88,12 @@ void descomprimir_lz78() {
         if (!archivo.get(c)) break;
 
         int indice = (static_cast<unsigned char>(high) << 8) | static_cast<unsigned char>(low);
+
+        // Validar que no excedamos el límite del diccionario
+        if (total >= MAX_ENTRADAS) {
+            cout << "Error: Se excedió el tamaño máximo del diccionario." << endl;
+            break;
+        }
 
         // Construir la nueva cadena S = prefijo + c
         int nuevoTam = 1;
@@ -99,7 +118,7 @@ void descomprimir_lz78() {
         }
 
         // Escribir la nueva cadena en el archivo de salida
-        archivo2 << nuevoStr;
+        archivo2.write(nuevoStr, nuevoTam);
 
         // Guardar en el diccionario
         diccionario[total] = nuevoStr;
@@ -141,30 +160,71 @@ void desencriptar(const char* filename, int n, unsigned char K) {
 }
 
 int determinar_metodo() {
-    ifstream archivo("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto comprimido.txt");
+    ifstream archivo("/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Texto comprimido.txt", ios::binary);
     if (!archivo.is_open()) {
         cout << "Error: No se pudo abrir el archivo comprimido para determinación." << endl;
         return 0;
     }
 
     char ch;
-    bool is_printable = true;
+    bool has_null_bytes = false;
+    bool has_high_bytes = false;
+    bool looks_like_rle = false;
     int count = 0;
-    while (archivo.get(ch) && count < 100) {  // Revisar solo los primeros 100 bytes para eficiencia
+    int consecutive_digits = 0;
+    int char_digit_pairs = 0;  // Contador de pares carácter-dígito
+    bool last_was_printable = false;
+
+    while (archivo.get(ch) && count < 500) {  // Revisar más bytes para mejor detección
         unsigned char uch = static_cast<unsigned char>(ch);
-        if (uch == 0 || (!isprint(uch) && uch != '\n' && uch != '\r' && uch != '\t')) {
-            is_printable = false;
-            break;
+
+        // Verificar si hay bytes nulos (común en LZ78)
+        if (uch == 0) {
+            has_null_bytes = true;
         }
+
+        // Verificar si hay bytes altos (> 127) que son comunes en LZ78
+        if (uch > 127) {
+            has_high_bytes = true;
+        }
+
+        // Detectar patrones RLE: caracteres imprimibles seguidos de dígitos
+        if (isdigit(uch)) {
+            if (last_was_printable) {
+                char_digit_pairs++;
+            }
+            consecutive_digits++;
+            last_was_printable = false;
+            if (consecutive_digits > 10) { // Más de 10 dígitos consecutivos es muy raro en RLE
+                looks_like_rle = false;
+            }
+        } else {
+            last_was_printable = isprint(uch) && uch != 127;
+            consecutive_digits = 0;
+        }
+
         count++;
     }
+
     archivo.close();
 
-    if (is_printable) {
-        return 1; // RLE (texto printable como dígitos y caracteres)
-    } else {
-        return 2; // LZ78 (binario con posibles bytes no printables)
+    // Si encontramos muchos pares carácter-dígito, probablemente es RLE
+    if (char_digit_pairs > 5 && !has_null_bytes) {
+        looks_like_rle = true;
     }
+
+    // LZ78 típicamente tiene bytes nulos o altos debido a los índices de 16 bits
+    if (has_null_bytes || (has_high_bytes && !looks_like_rle)) {
+        return 2; // LZ78
+    }
+
+    // Si parece texto normal con patrones de números y letras, probablemente es RLE
+    if (looks_like_rle) {
+        return 1; // RLE
+    }
+
+    // Por defecto, intentar LZ78
+    return 2;
 }
 
 void descomprimir_auto() {
@@ -185,10 +245,14 @@ void descomprimir_auto() {
 }
 
 int main() {
-    const char* filename = "/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Encriptado1.txt"; // Es necesario cambiar esta ruta para procesar otros archivos
-    desencriptar(filename, 3, 0x5A); // Por ejemplo, n=3, K=0x5A
+    const char* filename = "/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/Encriptado3.txt"; // Cambia este nombre para procesar otros archivos
+    // Ejemplo: Llama a desencriptar con valores conocidos (ajusta n y K según el desafío)
+    desencriptar(filename, 3, 0x5A); // Por ejemplo, n=3, K=0x5A - cámbialos por los correctos
 
+    // Luego, descomprime automáticamente determinando el método
     descomprimir_auto();
+
+    cout << "Proceso completado. Revisa el archivo 'Texto descomprimido.txt'" << endl;
 
     return 0;
 }

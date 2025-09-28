@@ -1,7 +1,7 @@
-/home/david/Documentos/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/Unir_ccodigos.dir
-/home/david/Documentos/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/edit_cache.dir
-/home/david/Documentos/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/rebuild_cache.dir
-/home/david/Documentos/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/list_install_components.dir
-/home/david/Documentos/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/install.dir
-/home/david/Documentos/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/install/local.dir
-/home/david/Documentos/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/install/strip.dir
+/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/Unir_ccodigos.dir
+/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/edit_cache.dir
+/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/rebuild_cache.dir
+/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/list_install_components.dir
+/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/install.dir
+/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/install/local.dir
+/home/david/Documentos/Informatica_Desafios/Unir_ccodigos/build/Desktop-Debug/CMakeFiles/install/strip.dir

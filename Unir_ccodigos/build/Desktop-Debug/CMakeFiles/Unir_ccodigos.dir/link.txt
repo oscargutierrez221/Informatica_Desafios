@@ -1,1 +1,0 @@
-/usr/bin/g++ -DQT_QML_DEBUG -g CMakeFiles/Unir_ccodigos.dir/main.cpp.o -o Unir_ccodigos 
